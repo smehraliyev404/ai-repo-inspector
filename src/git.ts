@@ -3,7 +3,9 @@ import { ReviewInputError } from "./errors.js";
 import type { ChangedFile } from "./types.js";
 
 function git(repositoryPath: string, args: string[]): string {
-  return execFileSync("git", args, {
+  // The inspected repo's .git/config is untrusted: core.fsmonitor can name a command
+  // that git runs while refreshing the index. Override it for every call.
+  return execFileSync("git", ["-c", "core.fsmonitor=false", ...args], {
     cwd: repositoryPath,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],

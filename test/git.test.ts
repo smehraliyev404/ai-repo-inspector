@@ -64,6 +64,17 @@ describe("changedFiles", () => {
     expect(files).toContainEqual({ path: "scratch.txt", status: "untracked" });
   });
 
+  it("does not run commands from the inspected repository's git config (core.fsmonitor)", () => {
+    const fixture = track(createFeatureBranchFixture());
+    const marker = join(fixture.dir, "FSMONITOR-RAN");
+    fixture.git("config", "core.fsmonitor", `touch "${marker}"; false`);
+    fixture.write("README.md", "edited so git refreshes the index\n");
+
+    changedFiles(fixture.dir);
+
+    expect(readdirSync(fixture.dir)).not.toContain("FSMONITOR-RAN");
+  });
+
   it("returns unusual file names verbatim (spaces, unicode, backticks)", () => {
     const fixture = track(createFeatureBranchFixture());
     const names = ["with space.txt", "ünïcödé.txt", "tick```name.txt"];

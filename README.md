@@ -91,7 +91,10 @@ Markdown the CLI writes. A failing check is a normal result (`passed: false`);
 `isError` is used only when the review itself could not run.
 The tool description lists the available names. Unknown check names and unknown
 fields (such as the removed `validationCommands`) are rejected with an error.
-With no `--check` flags, the server runs no commands at all.
+With no `--check` flags, the server runs no checks: only read-only git queries,
+with `core.fsmonitor` disabled so the inspected repo's own git config cannot
+start a command. `repo_path` is not restricted yet, so a configured check can
+be run in any repository the server user can access.
 
 The CLI keeps `--validate "<command>"`: there the developer typing the command
 is the trust root, so arbitrary commands are expected.
