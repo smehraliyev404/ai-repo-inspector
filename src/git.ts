@@ -8,6 +8,19 @@ function git(repositoryPath: string, args: string[]): string {
   }).trim();
 }
 
+export function isGitRepository(directory: string): boolean {
+  try {
+    execFileSync("git", ["rev-parse", "--is-inside-work-tree"], {
+      cwd: directory,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function changedFiles(repositoryPath: string, baseRef?: string): ChangedFile[] {
   const base = baseRef ?? "main";
   const output = git(repositoryPath, ["diff", "--name-status", `${base}...HEAD`]);

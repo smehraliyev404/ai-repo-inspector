@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { writeFileSync } from "node:fs";
-import { reviewRepository } from "./core.js";
+import { ReviewInputError, reviewRepository } from "./core.js";
 
 type Args = {
   command: string;
@@ -46,6 +46,10 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error("Fatal error:", error);
+  if (error instanceof ReviewInputError) {
+    console.error(`Error: ${error.message}`);
+  } else {
+    console.error("Fatal error:", error);
+  }
   process.exitCode = 1;
 });
