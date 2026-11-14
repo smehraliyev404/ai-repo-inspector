@@ -1,10 +1,11 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createFeatureBranchFixture, type GitFixture } from "./helpers/git-fixture.js";
 
-const projectRoot = resolve(import.meta.dirname, "..");
+const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const tsx = join(projectRoot, "node_modules", ".bin", "tsx");
 const cliEntry = join(projectRoot, "src", "cli.ts");
 
