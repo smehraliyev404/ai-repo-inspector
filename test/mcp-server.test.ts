@@ -35,7 +35,7 @@ describe("MCP review_repository", () => {
     });
 
     expect(result.isError).toBeFalsy();
-    expect(textOf(result)).toContain("feature.txt (added)");
+    expect(textOf(result)).toContain("`feature.txt` (added)");
     expect(textOf(result)).not.toContain("undefined");
   });
 

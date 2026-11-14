@@ -30,16 +30,16 @@ function resolveCommit(repositoryPath: string, ref: string): string | undefined 
 }
 
 /** Explicit base ref, else the remote's default branch, else local main/master. */
-function resolveBase(repositoryPath: string, baseRef?: string): string {
+export function resolveBase(repositoryPath: string, baseRef?: string): { ref: string; sha: string } {
   if (baseRef !== undefined) {
     const sha = resolveCommit(repositoryPath, baseRef);
     if (!sha) throw new ReviewInputError(`Unknown base ref: ${baseRef}`);
-    return sha;
+    return { ref: baseRef, sha };
   }
   const remoteHead = tryGit(repositoryPath, ["symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD"]);
   for (const candidate of [remoteHead, "main", "master"]) {
     const sha = candidate ? resolveCommit(repositoryPath, candidate) : undefined;
-    if (sha) return sha;
+    if (candidate && sha) return { ref: candidate, sha };
   }
   throw new ReviewInputError("Could not find a base branch (origin/HEAD, main or master). Pass a base ref explicitly.");
 }
@@ -76,7 +76,7 @@ function parseNameStatus(output: string): ChangedFile[] {
  * files. `-z` output keeps paths verbatim (no quoting of spaces or unicode).
  */
 export function changedFiles(repositoryPath: string, baseRef?: string): ChangedFile[] {
-  const base = resolveBase(repositoryPath, baseRef);
+  const base = resolveBase(repositoryPath, baseRef).sha;
   const mergeBase = tryGit(repositoryPath, ["merge-base", base, "HEAD"]) ?? base;
   const tracked = parseNameStatus(git(repositoryPath, ["diff", "--name-status", "-z", "-M", mergeBase]));
   const untracked = git(repositoryPath, ["ls-files", "--others", "--exclude-standard", "-z"])

@@ -21,7 +21,8 @@ export type GitFixture = {
 
 /** Creates a throwaway repository in the OS temp folder. Always call cleanup(). */
 export function createGitFixture(defaultBranch = "main"): GitFixture {
-  const dir = mkdtempSync(join(tmpdir(), "inspector-fixture-"));
+  // The space in the name is deliberate: every test exercises paths with spaces.
+  const dir = mkdtempSync(join(tmpdir(), "inspector fixture-"));
   const git = (...args: string[]) =>
     execFileSync("git", [...GIT_TEST_CONFIG, ...args], { cwd: dir, encoding: "utf8" }).trim();
 

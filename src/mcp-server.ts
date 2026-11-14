@@ -4,7 +4,9 @@ import { fileURLToPath } from "node:url";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { ReviewInputError, reviewRepository } from "./core.js";
+import { ReviewInputError, runReview } from "./core.js";
+import { markdownReport } from "./report.js";
+import { reviewResultSchema } from "./types.js";
 
 /**
  * Trust boundary: the MCP caller is an AI agent whose input may be steered by
@@ -35,7 +37,11 @@ function describeTool(checkNames: string[]): string {
     checkNames.length > 0
       ? `Available checks (pass names in \`checks\`): ${checkNames.join(", ")}.`
       : "No checks are configured on this server, so only changed files are reported.";
-  return `Inspects a Git repository and returns a review report. ${checksText}`;
+  return (
+    "Inspects a Git repository: files changed against the base branch (committed, uncommitted and " +
+    `untracked) and the result of each requested check. ${checksText} ` +
+    "A failing check is a normal result (passed: false), not a tool error."
+  );
 }
 
 export function createServer(options: ServerOptions = {}): McpServer {
@@ -52,28 +58,35 @@ export function createServer(options: ServerOptions = {}): McpServer {
       inputSchema: z
         .object({
           repo_path: z.string().min(1).describe("Path of the Git repository to inspect."),
-          baseRef: z.string().optional(),
+          base_ref: z
+            .string()
+            .optional()
+            .describe("Branch or commit to compare against. Default: origin/HEAD, then main, then master."),
           checks: z
             .array(z.string())
             .optional()
             .describe("Names of operator-configured checks to run. Command text is not accepted."),
         })
         .strict(),
+      // Same schema the CLI's --format json emits.
+      outputSchema: reviewResultSchema,
     },
-    // Input is typed from the schema above, so a field-name mismatch is a compile error.
-    async ({ repo_path, baseRef, checks }) => {
+    async ({ repo_path, base_ref, checks }) => {
       try {
         const unknown = (checks ?? []).filter((name) => !Object.hasOwn(allowedChecks, name));
         if (unknown.length > 0) {
           const available = checkNames.length > 0 ? checkNames.join(", ") : "none configured";
           throw new ReviewInputError(`Unknown check(s): ${unknown.join(", ")}. Available: ${available}.`);
         }
-        const report = await reviewRepository({
+        const result = await runReview({
           repositoryPath: repo_path,
-          baseRef,
+          baseRef: base_ref,
           validationCommands: (checks ?? []).map((name) => allowedChecks[name]),
         });
-        return { content: [{ type: "text", text: report }] };
+        return {
+          structuredContent: result,
+          content: [{ type: "text", text: markdownReport(result) }],
+        };
       } catch (error) {
         const message =
           error instanceof ReviewInputError

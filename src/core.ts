@@ -1,9 +1,8 @@
 import { existsSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 import { ReviewInputError } from "./errors.js";
-import { changedFiles, isGitRepository } from "./git.js";
-import { markdownReport } from "./report.js";
-import type { ReviewRequest } from "./types.js";
+import { changedFiles, isGitRepository, resolveBase } from "./git.js";
+import type { ReviewRequest, ReviewResult } from "./types.js";
 import { runValidations } from "./validation.js";
 
 export { ReviewInputError };
@@ -26,13 +25,17 @@ export function resolveRepositoryPath(repositoryPath: string | undefined): strin
   return absolutePath;
 }
 
-export async function reviewRepository(request: ReviewRequest): Promise<string> {
+/** The one review implementation behind every interface. Rendering is the adapters' job. */
+export async function runReview(request: ReviewRequest): Promise<ReviewResult> {
   const repositoryPath = resolveRepositoryPath(request.repositoryPath);
-  const files = changedFiles(repositoryPath, request.baseRef);
+  const base = resolveBase(repositoryPath, request.baseRef);
+  const files = changedFiles(repositoryPath, base.sha);
   const validations = await runValidations(request.validationCommands ?? [], repositoryPath);
-  return markdownReport({
+  return {
     repositoryPath,
+    baseRef: base.ref,
+    passed: validations.every((validation) => validation.status === "passed"),
     changedFiles: files,
-    validationResults: validations,
-  });
+    validations,
+  };
 }

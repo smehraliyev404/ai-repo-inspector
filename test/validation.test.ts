@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { reviewRepository } from "../src/core.js";
+import { runReview } from "../src/core.js";
+import { markdownReport } from "../src/report.js";
 import { runValidation, runValidations } from "../src/validation.js";
 import { createFeatureBranchFixture, type GitFixture } from "./helpers/git-fixture.js";
 
@@ -36,12 +37,14 @@ describe("validation results", () => {
   });
 
   it("produces a report that shows which check failed", async () => {
-    const report = await reviewRepository({
+    const result = await runReview({
       repositoryPath: fixture.dir,
       validationCommands: ["exit 1", "echo fine"],
     });
+    const report = markdownReport(result);
 
-    expect(report).toContain("feature.txt (added)");
+    expect(result.passed).toBe(false);
+    expect(report).toContain("`feature.txt` (added)");
     expect(report).toMatch(/exit 1.*failed/);
     expect(report).toMatch(/echo fine.*passed/);
   });

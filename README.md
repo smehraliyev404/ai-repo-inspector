@@ -52,7 +52,14 @@ npm run inspector -- review --repo ./path/to/repo --format markdown
 npm run inspector -- review --repo ./path/to/repo --validate "npm test"
 ```
 
-The report is written to `review-report.md`.
+The report is written to `review-report.md` (change with `--output <file>`, or
+`--output -` for stdout). `--format json` emits the same structured result the
+MCP tool returns. `--base-ref` defaults to `origin/HEAD`, then `main`, then
+`master`. Changed files include committed branch work, uncommitted edits and
+untracked files.
+
+Exit codes: `0` review done and all checks passed, `1` a check failed or the
+review could not run, `2` invalid arguments.
 
 ## MCP
 
@@ -76,7 +83,12 @@ by name:
 npm run mcp-server -- --check "test=npm test" --check "typecheck=npm run typecheck"
 ```
 
-The agent then calls `review_repository` with `{"repo_path": "...", "checks": ["test"]}`.
+The agent then calls `review_repository` with
+`{"repo_path": "...", "base_ref": "main", "checks": ["test"]}` (only `repo_path`
+is required). The result is returned twice: as `structuredContent` (validated
+against the same schema as `--format json`, see `src/types.ts`) and as the same
+Markdown the CLI writes. A failing check is a normal result (`passed: false`);
+`isError` is used only when the review itself could not run.
 The tool description lists the available names. Unknown check names and unknown
 fields (such as the removed `validationCommands`) are rejected with an error.
 With no `--check` flags, the server runs no commands at all.
