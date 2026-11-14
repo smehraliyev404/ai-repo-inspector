@@ -1,14 +1,12 @@
 import { existsSync, statSync } from "node:fs";
 import { resolve } from "node:path";
+import { ReviewInputError } from "./errors.js";
 import { changedFiles, isGitRepository } from "./git.js";
 import { markdownReport } from "./report.js";
 import type { ReviewRequest } from "./types.js";
 import { runValidations } from "./validation.js";
 
-/** A problem with the caller's input. Safe to show to the caller as-is. */
-export class ReviewInputError extends Error {
-  override name = "ReviewInputError";
-}
+export { ReviewInputError };
 
 /** Resolves the requested path and fails loudly instead of inspecting some other directory. */
 export function resolveRepositoryPath(repositoryPath: string | undefined): string {
