@@ -92,9 +92,10 @@ Markdown the CLI writes. A failing check is a normal result (`passed: false`);
 The tool description lists the available names. Unknown check names and unknown
 fields (such as the removed `validationCommands`) are rejected with an error.
 With no `--check` flags, the server runs no checks: only read-only git queries,
-with `core.fsmonitor` disabled so the inspected repo's own git config cannot
-start a command. `repo_path` is not restricted yet, so a configured check can
-be run in any repository the server user can access.
+with `core.fsmonitor` disabled (the one config-to-command path closed and
+tested; other repo-config paths, such as filter drivers, were not audited).
+`repo_path` is not restricted yet, so a configured check can be run in any
+repository the server user can access.
 
 The CLI keeps `--validate "<command>"`: there the developer typing the command
 is the trust root, so arbitrary commands are expected.
