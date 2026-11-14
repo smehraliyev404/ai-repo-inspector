@@ -8,6 +8,9 @@ export type ValidationResult = {
   status: "passed" | "failed";
   /** null when the process did not exit normally (failed to start or killed by a signal). */
   exitCode: number | null;
+  /** true when the command was killed for exceeding the time limit. */
+  timedOut: boolean;
+  /** Combined stdout/stderr, capped in size (middle dropped when too long). */
   output: string;
 };
 
