@@ -66,6 +66,24 @@ It exposes a `review_repository` tool. Inspect the implementation to determine
 its current input contract and whether it is suitable for the production model
 you propose.
 
+### Checks (MCP)
+
+The MCP caller is an AI agent, so it cannot send command text. The person who
+starts the server decides which checks exist; the agent can only ask for them
+by name:
+
+```bash
+npm run mcp-server -- --check "test=npm test" --check "typecheck=npm run typecheck"
+```
+
+The agent then calls `review_repository` with `{"repo_path": "...", "checks": ["test"]}`.
+The tool description lists the available names. Unknown check names and unknown
+fields (such as the removed `validationCommands`) are rejected with an error.
+With no `--check` flags, the server runs no commands at all.
+
+The CLI keeps `--validate "<command>"`: there the developer typing the command
+is the trust root, so arbitrary commands are expected.
+
 ## Project layout
 
 ```text
